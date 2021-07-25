@@ -95,7 +95,7 @@ describe('Admin > Settings', function () {
     helper.admin$('#restartEtherpad').click();
     await helper.waitForPromise(async () => {
       const startTime = await getStartTime();
-      return startTime != null && startTime >= oldStartTime;
+      return startTime != null && startTime > oldStartTime;
     }, 60000, 500);
   });
 });
