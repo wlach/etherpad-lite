@@ -39,6 +39,7 @@ const assert = require('assert').strict;
 const nodeify = require('nodeify');
 const {RateLimiterMemory} = require('rate-limiter-flexible');
 const webaccess = require('../hooks/express/webaccess');
+const { execSync } = require("child_process");
 
 let rateLimiter;
 
@@ -899,9 +900,18 @@ const handleClientReady = async (socket, message, authorID) => {
 
   // get all authordata of this new user
   assert(authorID);
+
+  // HACK: get a default user name based on their tailscale IP
+  const { User: users, Peer: peers } = JSON.parse(execSync("tailscale status --json").toString());
+  const ipUserMap = {};
+  Object.values(peers).forEach(peer => {
+      const user = Object.values(users).find(v=>v.ID === peer.UserID);
+      ipUserMap[peer.TailAddr] = user.DisplayName;
+  })
+
   const value = await authorManager.getAuthor(authorID);
   const authorColorId = value.colorId;
-  const authorName = value.name;
+  const authorName = value.name || ipUserMap[socket.handshake.address] || "";
 
   // load the pad-object from the database
   const pad = await padManager.getPad(padIds.padId);
